@@ -1,0 +1,6 @@
+
+{
+  "name": "Vertara Invoice Generator",
+  "description": "A professional invoice management and generation tool for Vertara.id Open Trip Hiking & Adventure Tourism, featuring Excel import, CRUD operations, and printable invoice designs.",
+  "requestFramePermissions": []
+}
