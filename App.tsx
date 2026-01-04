@@ -189,18 +189,44 @@ const App: React.FC = () => {
   };
 
   const handleDownloadPDF = async () => {
-    if (!currentInvoice) return;
+    if (!currentInvoice || !invoiceRef.current) return;
     setIsGenerating(true);
     try {
-      const canvas = await generateCanvas();
-      if (!canvas) return;
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 2, // Slightly lower scale to avoid huge images, readable enough
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 1000,
+      });
+
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // If content is taller than A4, we use custom height to fit everything on one page like a receipt
+      // Or we can use standard A4 if it fits. 
+      // For invoices, better to just scale to fit A4 width, and let height be whatever it is.
+      // But standard PDFs usually expect standard pages.
+      // Let's create a custom page size if it's super long, otherwise A4.
+
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: [imgWidth, Math.max(imgHeight, 297)] // Dynamic height based on content
+      });
+
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
       pdf.save(`Invoice_${currentInvoice.invoiceNo}.pdf`);
-    } catch (error) { console.error(error); } finally { setIsGenerating(false); }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to generate PDF. Check console for details.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (!isAuthenticated) return <Login onLogin={handleLogin} />;
