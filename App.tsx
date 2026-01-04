@@ -189,41 +189,45 @@ const App: React.FC = () => {
   };
 
   const handleDownloadPDF = async () => {
-    if (!currentInvoice || !invoiceRef.current) return;
     setIsGenerating(true);
     try {
-      const canvas = await html2canvas(invoiceRef.current, {
-        scale: 2, // Slightly lower scale to avoid huge images, readable enough
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: 1000,
-      });
+      const canvas = await generateCanvas();
+      if (!canvas) throw new Error("Canvas capture failed");
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-
+      const imgWidth = 210; // A4 width mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // If content is taller than A4, we use custom height to fit everything on one page like a receipt
-      // Or we can use standard A4 if it fits. 
-      // For invoices, better to just scale to fit A4 width, and let height be whatever it is.
-      // But standard PDFs usually expect standard pages.
-      // Let's create a custom page size if it's super long, otherwise A4.
 
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'mm',
-        format: [imgWidth, Math.max(imgHeight, 297)] // Dynamic height based on content
+        format: [imgWidth, imgHeight]
       });
 
       pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`Invoice_${currentInvoice.invoiceNo}.pdf`);
+      pdf.save(`Invoice_${currentInvoice?.invoiceNo}.pdf`);
     } catch (error) {
       console.error(error);
-      alert("Failed to generate PDF. Check console for details.");
+      alert("Failed to generate PDF. Check console.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadPNG = async () => {
+    setIsGenerating(true);
+    try {
+      const canvas = await generateCanvas();
+      if (!canvas) throw new Error("Canvas capture failed");
+
+      const imgData = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = `Invoice_${currentInvoice?.invoiceNo}.png`;
+      link.click();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to generate PNG. Check console.");
     } finally {
       setIsGenerating(false);
     }
@@ -344,6 +348,9 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-3">
+              <button onClick={handleDownloadPNG} disabled={isGenerating} title="Unduh sebagai Gambar (PNG)" className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 px-6 py-3.5 rounded-2xl font-black flex items-center gap-3 active:scale-95 text-[10px] uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />} PNG
+              </button>
               <button onClick={handleDownloadPDF} disabled={isGenerating} title="Unduh Invoice dalam format PDF" className="bg-white text-slate-950 px-8 py-3.5 rounded-2xl font-black flex items-center gap-3 active:scale-95 text-[10px] uppercase tracking-widest">
                 {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />} PDF Export
               </button>
