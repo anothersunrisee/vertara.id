@@ -328,7 +328,7 @@ const App: React.FC = () => {
           {view === 'dashboard' && <DashboardHome invoices={invoices} expenses={expenses} theme={theme} />}
           {view === 'manifests' && <TripGroups invoices={invoices} onPreview={handlePreviewInvoice} />}
           {view === 'invoices' && (
-            <InvoiceList invoices={invoices} onEdit={handleEditInvoice} onDelete={handleDeleteInvoice} onPreview={handlePreviewInvoice} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+            <InvoiceList invoices={invoices} onEdit={handleEditInvoice} onDelete={handleDeleteInvoice} onPreview={handlePreviewInvoice} searchQuery={searchQuery} setSearchQuery={setSearchQuery} settings={settings} />
           )}
           {view === 'expenses' && <ExpenseManager expenses={expenses} onAdd={handleAddExpense} onEdit={handleEditExpense} onDelete={handleDeleteExpense} />}
           {view === 'form' && <InvoiceForm initialData={currentInvoice} onSave={saveInvoice} onCancel={() => setView('invoices')} lastInvoiceNo={invoices[0]?.invoiceNo} />}

@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Search, Edit2, Eye, Trash2, Calendar, Mountain, DollarSign, Filter, X, ChevronRight, MapPin, MessageCircle } from 'lucide-react';
-import { InvoiceData, InvoiceStatus } from '../types';
+import { InvoiceData, InvoiceStatus, AppSettings } from '../types';
 import { STATUS_COLORS } from '../constants';
 
 interface InvoiceListProps {
@@ -11,10 +11,11 @@ interface InvoiceListProps {
   onDelete: (id: string) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+  settings: AppSettings;
 }
 
-const InvoiceList: React.FC<InvoiceListProps> = ({ 
-  invoices, onEdit, onPreview, onDelete, searchQuery, setSearchQuery 
+const InvoiceList: React.FC<InvoiceListProps> = ({
+  invoices, onEdit, onPreview, onDelete, searchQuery, setSearchQuery, settings
 }) => {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [monthFilter, setMonthFilter] = useState<string>('ALL');
@@ -29,7 +30,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
   }, [invoices]);
 
   const filtered = invoices.filter(inv => {
-    const matchesSearch = 
+    const matchesSearch =
       inv.namaLengkap.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inv.invoiceNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inv.gunung.toLowerCase().includes(searchQuery.toLowerCase());
@@ -39,7 +40,19 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
   });
 
   const sendWhatsApp = (inv: InvoiceData) => {
-    const message = `Halo Kak ${inv.namaLengkap},\n\nTerima kasih telah bergabung dengan *VERTARA.ID* untuk trip ke *${inv.gunung}* (${inv.tanggalTrip}).\n\nBerikut ringkasan tagihan Anda:\n*No Invoice:* ${inv.invoiceNo}\n*Paket:* ${inv.jenisPaket}\n*Total Tagihan:* Rp ${inv.total.toLocaleString('id-ID')}\n*Status:* ${inv.status}\n\nSilakan melakukan pelunasan ke rekening yang tertera di invoice. Salam lestari! 🏔️`;
+    let message = '';
+    const bankDetails = `\n\n💳 *Rekening Pembayaran:*\n${settings.bankName}\n${settings.accountNo}\na.n ${settings.accountName}`;
+    const footer = `\n\nSalam lestari! 🏔️\n*VERTARA.ID*`;
+
+    if (inv.status === InvoiceStatus.UNPAID) {
+      message = `Halo Kak *${inv.namaLengkap}*,\n\nTerima kasih telah mendaftar trip *${inv.gunung}* (${inv.tanggalTrip}).\n\nBerikut rincian tagihan Anda:\n🔖 No Invoice: *${inv.invoiceNo}*\n💰 Total: *Rp ${inv.total.toLocaleString('id-ID')}*\n🔴 Status: *BELUM LUNAS (UNPAID)*\n\nMohon dapat segera menyelesaikan pembayaran untuk mengamankan slot Anda.${bankDetails}${footer}`;
+    } else if (inv.status === InvoiceStatus.DP) {
+      message = `Halo Kak *${inv.namaLengkap}*,\n\nTerima kasih pembayaran DP untuk trip *${inv.gunung}* (${inv.tanggalTrip}) sudah kami terima.\n\nBerikut update tagihan Anda:\n🔖 No Invoice: *${inv.invoiceNo}*\n💰 Total Tagihan: *Rp ${inv.total.toLocaleString('id-ID')}*\n🟡 Status: *DP DITERIMA*\n\nMohon kesediaannya untuk melakukan pelunasan sebelum hari keberangkatan.${bankDetails}${footer}`;
+    } else {
+      // PAID
+      message = `Halo Kak *${inv.namaLengkap}*,\n\nPembayaran LUNAS untuk trip *${inv.gunung}* (${inv.tanggalTrip}) telah kami terima. Terima kasih sudah mempercayakan petualangan Anda bersama Vertara.id.\n\n🔖 No Invoice: *${inv.invoiceNo}*\n🟢 Status: *LUNAS (PAID)*\n\nSampai jumpa di meeting point! 🚐💨${footer}`;
+    }
+
     const encoded = encodeURIComponent(message);
     const waNumber = inv.wa.replace(/[^0-9]/g, '');
     const cleanNumber = waNumber.startsWith('0') ? '62' + waNumber.slice(1) : waNumber;
@@ -56,8 +69,8 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
           <p className="text-slate-400 mt-2 font-bold text-xs tracking-widest uppercase">Expedition booking registry</p>
         </div>
         <div className="relative group flex-1 lg:max-w-[400px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-            <input type="text" placeholder="Search by name, ID, or peak..." className="w-full pl-12 pr-4 py-4 rounded-[20px] glass border outline-none text-slate-900 dark:text-white font-bold text-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <input type="text" placeholder="Search by name, ID, or peak..." className="w-full pl-12 pr-4 py-4 rounded-[20px] glass border outline-none text-slate-900 dark:text-white font-bold text-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
       </header>
 
@@ -70,7 +83,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
           <option value="ALL">Date: All</option>
           {availableMonths.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
-        { (statusFilter !== 'ALL' || monthFilter !== 'ALL') && (
+        {(statusFilter !== 'ALL' || monthFilter !== 'ALL') && (
           <button title="Reset Semua Filter" onClick={() => { setStatusFilter('ALL'); setMonthFilter('ALL'); }} className="ml-auto mr-2 p-3 text-rose-500 hover:bg-rose-50 rounded-xl transition">
             <X size={18} />
           </button>
@@ -83,10 +96,9 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
             <div className="flex-1 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 tracking-[0.2em] bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-full uppercase">{inv.invoiceNo}</span>
-                <span className={`text-[9px] font-black px-4 py-1.5 rounded-full border uppercase tracking-widest ${
-                  inv.status === 'PAID' ? 'bg-emerald-500 text-white border-transparent' : 
-                  inv.status === 'DP' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-rose-100 text-rose-700 border-rose-200'
-                }`}>{inv.status}</span>
+                <span className={`text-[9px] font-black px-4 py-1.5 rounded-full border uppercase tracking-widest ${inv.status === 'PAID' ? 'bg-emerald-500 text-white border-transparent' :
+                    inv.status === 'DP' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-rose-100 text-rose-700 border-rose-200'
+                  }`}>{inv.status}</span>
               </div>
               <div>
                 <h4 className="text-2xl font-black text-emerald-950 dark:text-white tracking-tighter leading-none">{inv.namaLengkap}</h4>
