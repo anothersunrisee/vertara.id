@@ -184,7 +184,7 @@ const App: React.FC = () => {
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: 1000,
+      windowWidth: 800,
     });
   };
 
@@ -356,7 +356,7 @@ const App: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className="w-full max-w-4xl bg-white shadow-2xl rounded-sm p-0 mb-32" ref={invoiceRef}>
+          <div className="w-fit bg-white shadow-2xl rounded-sm p-0 mb-32" ref={invoiceRef}>
             <InvoicePreview data={currentInvoice} settings={settings} />
           </div>
         </div>

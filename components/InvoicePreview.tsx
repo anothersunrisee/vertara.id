@@ -24,7 +24,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, settings }) => {
   const footerText = settings.footerNote || 'This invoice serves as a binding confirmation. Please contact admin for details.';
 
   return (
-    <div id="invoice-preview" className="bg-white text-slate-800 p-10 md:p-16 mx-auto shadow-none print:shadow-none min-h-[1414px] flex flex-col font-dm relative overflow-hidden" style={{ width: '1000px' }}>
+    <div id="invoice-preview" className="bg-white text-slate-800 p-10 md:p-12 mx-auto shadow-none print:shadow-none min-h-[1123px] flex flex-col font-dm relative overflow-hidden" style={{ width: '794px' }}>
 
       {/* Decorative Background Element */}
       <div className="absolute top-[-100px] right-[-100px] w-64 h-64 bg-emerald-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
@@ -65,8 +65,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, settings }) => {
           </div>
           <div className="pt-2">
             <span className={`text-[12px] font-bold px-5 py-2 rounded-full border-2 transition-colors ${data.status === 'PAID' ? 'bg-green-50 text-green-700 border-green-200' :
-                data.status === 'DP' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  'bg-rose-50 text-rose-700 border-rose-200'
+              data.status === 'DP' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                'bg-rose-50 text-rose-700 border-rose-200'
               }`}>
               {data.status} • {data.invoiceDate}
             </span>
